@@ -117,10 +117,9 @@ class KineticGraph:
 
         for concentration in self.agonist:
             self.step(concentration)
-        
+
         return {k: np.array(n.rec) for k, n in self.nodes.items()}
 
 
 if __name__ == "__main__":
     base_pth = "/mnt/Data/NEURONoutput"
-

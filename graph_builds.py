@@ -93,7 +93,7 @@ def AMPAR(mods):
     graph.new_edge("A2D", "A2R", .0003635)  # beta2 (resensitize)
     graph.new_edge("A2R*", "A2Dp", .00885)  # alpha3  (desensitize)
     graph.new_edge("A2Dp", "A2R*", .002)    # beta3 (resensitize)
-    
+
     graph.new_edge("AD", "A2D", 3.81, 1)    # k3 (agonist bind)
     graph.new_edge("A2D", "AD", .02285)     # k3r (agonist unbind)
     graph.new_edge("A2D", "A2Dp", .00672)   # alpha4 (prime)
@@ -128,15 +128,15 @@ def NMDAR(mods):
 
     if mode == "M":
         kon = 19
-        koff = .058  
-        C1C2 = .150 
-        C2C1 = .173 
-        C2C3 = .902 
+        koff = .058
+        C1C2 = .150
+        C2C1 = .173
+        C2C3 = .902
         C3C2 = 2.412
         C3O1 = 4.467
         O1C3 = 1.283
         O1O2 = 4.630
-        O2O1 = .526 
+        O2O1 = .526
     elif mode == "H":
         kon = 20
         koff = .058
@@ -181,7 +181,7 @@ def NMDAR(mods):
     graph.new_edge("A2R*", "A2R3", O1C3)               # O1C3 (close)
     graph.new_edge("A2R*", "A2R**", O1O2)              # O1O2 (lodge open)
     graph.new_edge("A2R**", "A2R*", O2O1)              # O2O1 (de-lodge)
-    
+
     return graph
 
 
@@ -212,7 +212,7 @@ def muscle_ACHR(mods):
     graph.new_edge("A2R", "AR", 20. * 2)               # k-2 (agonist unbind)
     graph.new_edge("A2R", "A2R*", 50.)                 # beta (opening)
     graph.new_edge("A2R*", "A2R", 1.1)                 # alpha (closing)
-    
+
     return graph
 
 
@@ -261,10 +261,10 @@ def Hatton_ACHR(mods):
     graph.new_edge("Ra-ARb*", "Ra-ARb", 71.3)   # alpha1b (ARb close)
     graph.new_edge("Ra-ARb", "A2R", 22.3, 1)    # k+2a (Ra agonist bind)
     graph.new_edge("A2R", "Ra-ARb", 1.33)       # k-2a (Ra agonist unbind)
-    
+
     graph.new_edge("A2R", "A2R*", 51.6)         # beta2 (double bound open)
     graph.new_edge("A2R*", "A2R", 2.46)         # alpha2 (double bound close)
-    
+
     return graph
 
 
@@ -315,12 +315,12 @@ def Hatton_L221F_ACHR(mods):
     graph.new_edge("Ra-ARb*", "Ra-ARb", 57.)    # alpha1b (ARb close)
     graph.new_edge("Ra-ARb", "A2R", 17.4, 1)    # k+2a (Ra agonist bind)
     graph.new_edge("A2R", "Ra-ARb", .409)       # k-2a (Ra agonist unbind)
-    
+
     graph.new_edge("A2R", "A2R*", 85.)          # beta2 (double bound open)
     graph.new_edge("A2R*", "A2R", 1.44)         # alpha2 (double bound close)
     graph.new_edge("A2R*", "A2D", .0193)        # des (desensitize)
     graph.new_edge("A2D", "A2R*", 9.4)          # res (resensitize)
-    
+
     return graph
 
 
@@ -377,11 +377,11 @@ def Pesti_alpha7(mods):
     X = 5.
     Y = 2.
     Z = 20.
-    
+
     kon = 10. * mods.get("on_multi", 1)
     koff = .5
-    beta = .00005    
-    alpha = 20.                   
+    beta = .00005
+    alpha = 20.
     des = .005 / mods.get("desens_div", 1)
     res = 5.
     slow_des = .00002
@@ -507,8 +507,8 @@ def McCormack_alpha7(mods):
     kon = 80. * mods.get("on_multi", 1)
     koff = 10.
     D_koff = .002778
-    beta = .05 
-    alpha = 2.5                   
+    beta = .05
+    alpha = 2.5
     des = np.array([2e-7, 12e-6, .01, .01]) / mods.get("desens_div", 1)
     res = np.array([.001, 16.67e-6, 3.86e-6, 1.1e-9])
 
@@ -584,8 +584,8 @@ def Mike_Circular_alpha7(mods):
     kon = 100. * mods.get("on_multi", 1)
     koff = 10.
     D_koff = .02
-    beta = 10. 
-    alpha = 8.                   
+    beta = 10.
+    alpha = 8.
     des = np.array([.00001, np.nan, 5., 5.]) / mods.get("desens_div", 1)
     res = np.array([.5, np.nan, .05, .001])
 
@@ -716,7 +716,7 @@ def alpha7(mods):
     graph.new_edge("A2D", "A2R", .026)                # res (resensitize)
     graph.new_edge("A2R", "A2R*", .0862)              # beta (opening)
     graph.new_edge("A2R*", "A2R", 7.641)              # alpha (closing)
-    
+
     return graph
 
 
@@ -763,13 +763,13 @@ def AChSnfr(mods):
     graph = KineticGraph(dt=mods.get("dt", .001),
                          tstop=mods.get("tstop", 25),
                          name="AChSnfr")
-    
+
     graph.add_node("R", v0=1.)  # unbound
     graph.add_node("AR*")       # agonist bound
-    
+
     graph.new_edge("R", "AR*", .62, agonist_sens=1)  # kon (agonist bind)
     graph.new_edge("AR*", "R", 0.73e-3)              # koff (agonist unbind)
-    
+
     return graph
 
 
