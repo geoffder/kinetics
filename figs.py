@@ -3,7 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from diffusion import disc2D, space3D
+from diffusion import disc2D, space3D, ach_2D, ach_3D, glut_2D, glut_3D
 import graph_builds as gb
 
 
@@ -137,22 +137,26 @@ def pulse_plot(graph_builder, pulses, title=""):
     plt.show()
 
 
-def prox_vs_distal(graph_builder, threeD=False):
+def prox_vs_distal(graph_builder, threeD=False, trans="ach", save_pth=None):
     """Load kinetic graph with proximal and distal 2D diffusion agonist
     profiles, then run it and plot open probability over time for each for
     comparison."""
     if not threeD:
         d_flag = "2D"
-        prox_func = disc2D(4700, 7.6e-10, 20e-9, 0)
-        distal_func = disc2D(4700, 7.6e-10, 20e-9, 1.1e-6)
-        # prox_func = disc2D(10000, 4e-10, 20e-9, 0)
-        # distal_func = disc2D(10000, 4e-10, 20e-9, 1.1e-6)
+        if trans == "ach":
+            prox_func = ach_2D(0)
+            distal_func = ach_2D(1.1e-6)
+        else:
+            prox_func = glut_2D(0)
+            distal_func = glut_2D(1.1e-6)
     else:
         d_flag = "3D"
-        # prox_func = space3D(4700, 7.6e-10, 0.)
-        # distal_func = space3D(4700, 7.6e-10, 1.1e-6)
-        prox_func = space3D(10000, 4e-10, 0., alpha=.12)
-        distal_func = space3D(10000, 4e-10, 1.1e-6, alpha=.12)
+        if trans == "ach":
+            prox_func = ach_3D(0)
+            distal_func = ach_3D(1.1e-6)
+        else:
+            prox_func = glut_3D(0)
+            distal_func = glut_3D(1.1e-6)
 
     model_prox = graph_builder(agonist_func=prox_func)
     model_distal = graph_builder(agonist_func=distal_func)
@@ -176,6 +180,11 @@ def prox_vs_distal(graph_builder, threeD=False):
     ax.spines['top'].set_visible(False)
 
     fig.tight_layout()
+
+    if save_pth is not None:
+        fname = "prox_vs_distal_%s_%s%s.png" % (model_prox.name, trans, d_flag)
+        fig.savefig(save_pth + fname, bbox_inches="tight")
+
     plt.show()
 
 
@@ -484,28 +493,55 @@ def kd_vs_peak_ratio():
 
 if __name__ == "__main__":
     base_pth = "/mnt/Data/kinetics/"
-    fig_pth = base_pth
+    fig_pth = base_pth + "temp/"
     # fig_pth = base_pth + "new_diffusion/"
     if not os.path.isdir(fig_pth):
         os.mkdir(fig_pth)
 
-    # diffusion2D_alpha_comparison()
+    diffusion2D_alpha_comparison()
 
     # prox_vs_distal(gb.loader(gb.GABA))
     # prox_vs_distal(gb.loader(gb.AChSnfr))
-    # prox_vs_distal(gb.loader(gb.alpha7))
-    # prox_vs_distal(gb.loader(gb.alpha7, desens_div=4), threeD=False)
+    prox_vs_distal(gb.loader(gb.alpha7), save_pth=fig_pth)
+    prox_vs_distal(gb.loader(gb.alpha7, desens_div=4), threeD=False, save_pth=fig_pth)
     # prox_vs_distal(gb.loader(gb.Pesti_alpha7))
     # prox_vs_distal(gb.loader(gb.McCormack_alpha7))
     # prox_vs_distal(gb.loader(gb.Mike_Circular_alpha7))
     # prox_vs_distal(gb.loader(gb.Mike_Bifurcated_alpha7))
-    # prox_vs_distal(gb.loader(gb.alpha3))
-    # prox_vs_distal(gb.loader(gb.AMPAR))
+    prox_vs_distal(gb.loader(gb.alpha3), save_pth=fig_pth)
+    prox_vs_distal(gb.loader(gb.AMPAR), save_pth=fig_pth)
     # prox_vs_distal(gb.loader(gb.Hatton_ACHR))
-    prox_vs_distal(gb.loader(gb.NMDAR, mode="M", tstop=200))
+    prox_vs_distal(gb.loader(gb.NMDAR, mode="M", tstop=200), save_pth=fig_pth)
 
     # pulse_plot(gb.loader(gb.GABA), [(0, 2, 10)], "GABA; pulse: 2ms @ 10mM")
     # pulse_plot(gb.loader(gb.alpha7), [(0, 1, .01)], "a7; pulse: 1ms @ 10μM")
+    # pulse_plot(gb.loader(gb.alpha7, desens_div=4),
+    #            [(0, .125, .1)], "a6; pulse: 0.125ms @ 100μM")
+    # pulse_plot(gb.loader(gb.alpha7, desens_div=4),
+    #            [(0, .25, .1)], "a6; pulse: 0.25ms @ 100μM")
+    # pulse_plot(gb.loader(gb.alpha7, desens_div=4),
+    #            [(0, .5, .1)], "a6; pulse: 0.5ms @ 100μM")
+    # pulse_plot(gb.loader(gb.alpha7, desens_div=4),
+    #            [(0, 1, .1)], "a6; pulse: 1ms @ 100μM")
+    # pulse_plot(gb.loader(gb.alpha7, desens_div=4),
+    #            [(0, 2, .1)], "a6; pulse: 2ms @ 100μM")
+    # pulse_plot(gb.loader(gb.alpha7, desens_div=4),
+    #            [(0, 3, .1)], "a6; pulse: 3ms @ 100μM")
+    # pulse_plot(gb.loader(gb.NMDAR, tstop=1000),
+    #            [(0, .125, .1)], "NMDAR; pulse: 0.125ms @ 100μM")
+    # pulse_plot(gb.loader(gb.NMDAR, tstop=1000),
+    #            [(0, .25, .1)], "NMDAR; pulse: 0.25ms @ 100μM")
+    # pulse_plot(gb.loader(gb.NMDAR, tstop=1000),
+    #            [(0, .5, .1)], "NMDAR; pulse: 0.5ms @ 100μM")
+    # pulse_plot(gb.loader(gb.NMDAR, tstop=1000),
+    #            [(0, 1, .1)], "NMDAR; pulse: 1ms @ 100μM")
+    # pulse_plot(gb.loader(gb.NMDAR, tstop=1000),
+    #            [(0, 2, .1)], "NMDAR; pulse: 2ms @ 100μM")
+    # pulse_plot(gb.loader(gb.NMDAR, tstop=1000),
+    #            [(0, 3, .1)], "NMDAR; pulse: 3ms @ 100μM")
+    # pulse_plot(gb.loader(gb.NMDAR, tstop=1000),
+    #            [(0, 15, .1)], "NMDAR; pulse: 15ms @ 100μM")
+    # plt.show()
 
     # binding_modulation_run(
     #     fig_pth, gb.loader(gb.AMPAR),
