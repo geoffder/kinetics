@@ -22,18 +22,18 @@ def disc2D(molecules, D, h, r):
         a = M / (4 * h * np.pi * d)
         b = np.exp(-r ** 2 / (4 * d))
         return a * b
-    return np.vectorize(closure) 
+    return np.vectorize(closure)
 
 
 def space3D(molecules, D, r, alpha=.21, lam=1.55):
     """Same as disc2D(), but modelling a restricted 3D space. alpha and lam(da)
-    are dimensionless constants. 
+    are dimensionless constants.
         alpha = volume fraction (% of total volume diffusion is restricted to)
             This models how there are many obstacles filling up space in the
             neural medium. Increases concentraion via (M / alpha).
         lambda = tortuosity (avg diffusional path is longer (*) by this factor)
             This models the extra distance that molecules must diffuse around
-            the obstacles. Lowers diffusion via (D / lam ** 2). 
+            the obstacles. Lowers diffusion via (D / lam ** 2).
     Returns concentration in mM."""
     def closure(t):
         M = molecules / 6.02e23  # conversion to moles
@@ -42,6 +42,22 @@ def space3D(molecules, D, r, alpha=.21, lam=1.55):
         b = np.exp(-r ** 2 / (4 * d))
         return a * b
     return np.vectorize(closure)
+
+
+def ach_2D(radius):
+    return disc2D(10000, 4e-10, 20e-9, radius)
+
+
+def ach_3D(radius):
+    return space3D(10000, 4e-10, radius, alpha=.12)
+
+
+def glut_2D(radius):
+    return disc2D(4700, 7.6e-10, 20e-9, radius)
+
+
+def glut_3D(radius):
+    return space3D(4700, 7.6e-10, radius, alpha=.12)
 
 
 if __name__ == "__main__":
