@@ -48,6 +48,11 @@ def GABA(mods):
 def AMPAR(mods):
     """
     Haas et al., 2018
+    https://elifesciences.org/articles/31755#fig6
+    Note that kon and koff rates were fit independently at each edge
+    (e.g. they were free parameters) rather than being fit once each and applied
+    to all relevant edges, scaled according to the number of agonist slots
+    available for binding/unbinding.
     Rate Constants:
        k1 = 13.77      [1 / (μM * s)]
        k1r = 2130      [1 / s]
