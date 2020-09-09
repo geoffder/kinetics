@@ -1,10 +1,12 @@
 import os
+# import h5py as h5
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from diffusion import disc2D, space3D, ach_2D, ach_3D, glut_2D, glut_3D
 import graph_builds as gb
+import utils
 
 
 def total_open(state_recs):
@@ -137,7 +139,8 @@ def pulse_plot(graph_builder, pulses, title=""):
     plt.show()
 
 
-def prox_vs_distal(graph_builder, threeD=False, trans="ach", save_pth=None):
+def prox_vs_distal(graph_builder, threeD=False, trans="ach", title=None,
+                   save_pth=None, fmt="png"):
     """Load kinetic graph with proximal and distal 2D diffusion agonist
     profiles, then run it and plot open probability over time for each for
     comparison."""
@@ -171,7 +174,10 @@ def prox_vs_distal(graph_builder, threeD=False, trans="ach", save_pth=None):
     ax.plot(model_distal.time, open_distal, label="Distal (r = 1.1μm)")
     ax.set_xlabel("Time (ms)", fontsize=12)
     ax.set_ylabel("Open Probability", fontsize=12)
-    ax.set_title("%s (Space %s)" % (model_prox.name, d_flag))
+
+    if title is None:
+        title = "%s (Space %s)" % (model_prox.name, d_flag)
+    ax.set_title(title)
 
     for ticks in (ax.get_xticklabels() + ax.get_yticklabels()):
         ticks.set_fontsize(11)
@@ -182,7 +188,7 @@ def prox_vs_distal(graph_builder, threeD=False, trans="ach", save_pth=None):
     fig.tight_layout()
 
     if save_pth is not None:
-        fname = "prox_vs_distal_%s_%s%s.png" % (model_prox.name, trans, d_flag)
+        fname = "prox_vs_distal_%s_%s%s.%s" % (model_prox.name, trans, d_flag, fmt)
         fig.savefig(save_pth + fname, bbox_inches="tight")
 
     plt.show()
@@ -418,43 +424,65 @@ def plot_modulation_states(multis, time, recs, ends=True, title=""):
     return fig
 
 
-def binding_modulation_run(pth, builder, mul_range=10, threeD=False, show=False):
+def binding_modulation_run(pth, builder, mul_range=10, threeD=False, trans="ach",
+                           show=False, fmt="png"):
     kons = [("R", "AR"), ("AR", "A2R")]
     koffs = [("AR", "R"), ("A2R", "AR")]
     rates = {"kon": kons, "koff": koffs, "kon_koff": kons + koffs}
 
+    agonists = {}
     if not threeD:
         d_flag = "2D"
-        agonists = {
-            # "prox": disc2D(4700, 7.6e-10, 20e-9, 0),
-            # "distal": disc2D(4700, 7.6e-10, 20e-9, 1.1e-6),
-            "prox": disc2D(10000, 4e-10, 20e-9, 0),
-            "distal": disc2D(10000, 4e-10, 20e-9, 1.1e-6),
-        }
+        if trans == "ach":
+            agonists["prox"] = ach_2D(0)
+            agonists["distal"] = ach_2D(1.1e-6)
+        else:
+            agonists["prox"] = glut_2D(0)
+            agonists["distal"] = glut_2D(1.1e-6)
     else:
         d_flag = "3D"
-        agonists = {
-            "prox": space3D(4700, 7.6e-10, 0., alpha=.12),
-            "distal": space3D(4700, 7.6e-10, 1.1e-6, alpha=.12),
-        }
+        if trans == "ach":
+            agonists["prox"] = ach_3D(0)
+            agonists["distal"] = ach_3D(1.1e-6)
+        else:
+            agonists["prox"] = glut_3D(0)
+            agonists["distal"] = glut_3D(1.1e-6)
 
+    data = {}
     for label, edges in rates.items():
         models, multis, recs, probs, metrics = rate_modulation(
             builder, edges, agonists, mul_range)
-        edge_str = ", ".join([" → ".join(e) for e in edges])
-        title = "%s; %s; (Space %s)" % (models["prox"].name, edge_str, d_flag)
+
+        # FIXME: Contains lists of ndarrays. Need to stack them into one ndarray
+        # per dict. {"key": [ndarray, ndarray...], ...} -> {"key": ndarray, ...}
+        data[label] = {
+            "recs": recs,
+            "probs": probs,
+            "metrics": metrics
+        }
+
+        # edge_str = ", ".join([" → ".join(e) for e in edges])
+        # title = "%s; %s; (Space %s)" % (models["prox"].name, edge_str, d_flag)
+        title = "%s %s modulation" % (models["prox"].name, label)
         metric_fig = plot_modulation_metrics(multis, metrics, title=title)
         open_fig = plot_modulation_open_prob(
             multis, models["prox"].time, probs, title=title)
         states_fig = plot_modulation_states(
             multis, models["prox"].time, recs, title=title)
         fname = models["prox"].name + "_mod_" + label + "_" + d_flag
-        metric_fig.savefig(pth + fname + "_metrics.png", bbox_inches="tight")
-        open_fig.savefig(pth + fname + "_open_prob.png", bbox_inches="tight")
-        states_fig.savefig(pth + fname + "_states.png", bbox_inches="tight")
+        metric_fig.savefig(pth + fname + "_metrics." + fmt, bbox_inches="tight")
+        open_fig.savefig(pth + fname + "_open_prob." + fmt, bbox_inches="tight")
+        states_fig.savefig(pth + fname + "_states." + fmt, bbox_inches="tight")
 
         if show:
             plt.show()
+
+    data["time"] = np.array(models["prox"].time)
+    data["multis"] = np.array(multis)
+
+    model_name = ("%s" % models["prox"].name).replace(" ", "_")
+    utils.pack_hdf(pth + model_name + "_rate_mod", data)
+
 
 
 def kd_vs_peak_ratio():
@@ -491,27 +519,75 @@ def kd_vs_peak_ratio():
     plt.show()
 
 
+def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], save_pth=None,
+                   fmt="png"):
+    time_ax = np.arange(1, 25001) * .001  # [ms]
+    time = time_ax / 1000  # [s]
+
+    funcs = {}
+    if 2 in spaces:
+        if trans == "ach":
+            funcs["2D"] = {"%.1f" % r: ach_2D(r * 1e-6) for r in radii}
+        else:
+            funcs["2D"] = {"%.1f" % r: glut_2D(r * 1e-6) for r in radii}
+
+    if 3 in spaces:
+        if trans == "ach":
+            funcs["3D"] = {"%.1f" % r: ach_3D(r * 1e-6) for r in radii}
+        else:
+            funcs["3D"] = {"%.1f" % r: glut_3D(r * 1e-6) for r in radii}
+
+    fig, ax = plt.subplots(1, figsize=(5, 5))
+    for space, rad_dict in funcs.items():
+        for rad, fun in rad_dict.items():
+            wave = fun(time) / 1000
+            ax.plot(time_ax, wave, label="r = %sμm (%s)" % (rad, space))
+
+    ax.set_yscale("log")
+    ax.set_ylim(5e-7, 1e-3)
+    ax.set_xlim(0, 5)
+    ax.set_ylabel("Concentration (M)", fontsize=12)
+    ax.set_xlabel("Time (ms)", fontsize=12)
+    ax.legend(frameon=False, fontsize=11)
+
+    for ticks in (ax.get_xticklabels() + ax.get_yticklabels()):
+        ticks.set_fontsize(11)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+
+    plt.tight_layout()
+
+    if save_pth is not None:
+        fname = "diffusion_profiles_%s.%s" % (trans, fmt)
+        fig.savefig(save_pth + fname, bbox_inches="tight")
+
+    plt.show()
+
+
 if __name__ == "__main__":
     base_pth = "/mnt/Data/kinetics/"
-    fig_pth = base_pth + "temp/"
+    fig_pth = base_pth + "ach_2d/"
     # fig_pth = base_pth + "new_diffusion/"
     if not os.path.isdir(fig_pth):
         os.mkdir(fig_pth)
 
-    diffusion2D_alpha_comparison()
+    fig_fmt="svg"
+    # diffusion2D_alpha_comparison()
 
     # prox_vs_distal(gb.loader(gb.GABA))
     # prox_vs_distal(gb.loader(gb.AChSnfr))
-    prox_vs_distal(gb.loader(gb.alpha7), save_pth=fig_pth)
-    prox_vs_distal(gb.loader(gb.alpha7, desens_div=4), threeD=False, save_pth=fig_pth)
+    # prox_vs_distal(gb.loader(gb.alpha7), save_pth=fig_pth, title="Alpha 7 nACHR", fmt=fig_fmt)
+    # prox_vs_distal(gb.loader(gb.alpha7, desens_div=4), threeD=False, save_pth=fig_pth,
+    #                title="Alpha 6 nACHR", fmt=fig_fmt)
     # prox_vs_distal(gb.loader(gb.Pesti_alpha7))
     # prox_vs_distal(gb.loader(gb.McCormack_alpha7))
     # prox_vs_distal(gb.loader(gb.Mike_Circular_alpha7))
     # prox_vs_distal(gb.loader(gb.Mike_Bifurcated_alpha7))
-    prox_vs_distal(gb.loader(gb.alpha3), save_pth=fig_pth)
-    prox_vs_distal(gb.loader(gb.AMPAR), save_pth=fig_pth)
+    # prox_vs_distal(gb.loader(gb.alpha3), save_pth=fig_pth, title="Alpha 3", fmt=fig_fmt)
+    # prox_vs_distal(gb.loader(gb.AMPAR), save_pth=fig_pth, title="AMPAR", fmt=fig_fmt)
     # prox_vs_distal(gb.loader(gb.Hatton_ACHR))
-    prox_vs_distal(gb.loader(gb.NMDAR, mode="M", tstop=200), save_pth=fig_pth)
+    # prox_vs_distal(gb.loader(gb.NMDAR, mode="M", tstop=200), save_pth=fig_pth,
+    #                title="NMDAR", fmt=fig_fmt)
 
     # pulse_plot(gb.loader(gb.GABA), [(0, 2, 10)], "GABA; pulse: 2ms @ 10mM")
     # pulse_plot(gb.loader(gb.alpha7), [(0, 1, .01)], "a7; pulse: 1ms @ 10μM")
@@ -545,10 +621,22 @@ if __name__ == "__main__":
 
     # binding_modulation_run(
     #     fig_pth, gb.loader(gb.AMPAR),
-    #     mul_range=10, threeD=False
+    #     mul_range=10, trans="ach", threeD=False
     # )
+
+    loaders = [
+        gb.loader(gb.alpha3),
+        gb.loader(gb.alpha7),
+        gb.loader(gb.alpha7, desens_div=4),
+    ]
+    for ldr in loaders:
+        binding_modulation_run(
+            fig_pth, ldr, mul_range=10, trans="ach", threeD=False, fmt=fig_fmt
+        )
 
     # prox_vs_distal_states(gb.loader(gb.alpha7))
     # prox_vs_distal_states(gb.loader(gb.alpha7, desens_div=4))
     # prox_vs_distal_states(gb.loader(gb.alpha3))
     # kd_vs_peak_ratio()
+
+    # plot_diffusion(spaces=[2], save_pth=fig_pth, fmt="png")
