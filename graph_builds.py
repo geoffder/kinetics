@@ -698,10 +698,17 @@ def alpha7(mods):
     kon rates adjusted by 1e6 to [1 / (mM * ms)].
     [1 / s] rates adjusted by 1e3 to [1 / ms].
     """
-    flag = "_desensDiv%i" % mods["desens_div"] if "desens_div" in mods else ""
+    name = "alpha7"
+    if "desens_div" in mods and mods["desens_div"] == 4:
+        flag = ""
+        name = "alpha6"
+    elif "desens_div" in mods:
+        flag = "_desensDiv%i" % mods["desens_div"]
+    else:
+        flag = ""
     graph = KineticGraph(dt=mods.get("dt", .001),
                          tstop=mods.get("tstop", 25),
-                         name="alpha7" + flag)
+                         name=name + flag)
 
     graph.add_node("R", v0=1.)  # unbound ready
     graph.add_node("AR")        # single agonist bound ready
