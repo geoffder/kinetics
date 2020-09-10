@@ -15,7 +15,7 @@ def disc2D(molecules, D, h, r):
         D = 7.6e-10 [literature value for glutamine]
         h = 20e-9
         r = 0 (directly across, distance of h), 1.1e-6 (peri-synaptic)
-    """
+    Returns function from time in s to concentration in mM."""
     def closure(t):
         M = molecules / 6.02e23  # conversion to moles
         d = t * D
@@ -34,7 +34,7 @@ def space3D(molecules, D, r, alpha=.21, lam=1.55):
         lambda = tortuosity (avg diffusional path is longer (*) by this factor)
             This models the extra distance that molecules must diffuse around
             the obstacles. Lowers diffusion via (D / lam ** 2).
-    Returns concentration in mM."""
+    Returns function from time in s to concentration in mM."""
     def closure(t):
         M = molecules / 6.02e23  # conversion to moles
         d = t * (D / lam ** 2)
