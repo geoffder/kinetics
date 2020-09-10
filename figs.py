@@ -15,13 +15,13 @@ def total_open(state_recs):
     return sum([state_recs[s] for s in state_recs.keys() if "*" in s])
 
 
-def diffusion2D_alpha_comparison():
-    """Side-by side comparison of (modified alpha7) and alpha3 responses to
-    2D diffusion based agonist stimulation profiles (also plotted)."""
-    a7_builder = gb.loader(gb.alpha7, desens_div=5, on_multi=2)
-    a3_builder = gb.loader(gb.alpha3, desens_div=5, on_multi=2)
-    prox_func = disc2D(4700, 7.6e-10, 20e-9, 0)
-    distal_func = disc2D(4700, 7.6e-10, 20e-9, 1.1e-6)
+def diffusion2D_alpha_comparison(save_pth=None, fmt="png"):
+    """Side-by side comparison of alpha7 and alpha3 responses to 2D diffusion
+    based agonist stimulation profiles (also plotted)."""
+    a7_builder = gb.loader(gb.alpha7)
+    a3_builder = gb.loader(gb.alpha3)
+    prox_func = ach_2D(0.0)
+    distal_func = ach_2D(1.1e-6)
 
     a7_prox = a7_builder(agonist_func=prox_func)
     a7_distal = a7_builder(agonist_func=distal_func)
@@ -46,14 +46,14 @@ def diffusion2D_alpha_comparison():
     ax[1].plot(a7_prox.time, a7_open_prox, label="Proximal (r = 0)")
     ax[1].plot(a7_distal.time, a7_open_distal, label="Distal (r = 1.1μm)")
     ax[1].set_ylabel("Open Probability", fontsize=12)
-    ax[1].set_title("alpha7 (0.2x desensitization, 2x on rate)")
+    ax[1].set_title("Alpha 7")
 
     ax[2].plot(a3_prox.time, a3_open_prox, label="Proximal (r = 0)")
     ax[2].plot(a3_distal.time, a3_open_distal, label="Distal (r = 1.1μm)")
     ax[2].set_xlim(0, 25)
     ax[2].set_xlabel("Time (ms)", fontsize=12)
     ax[2].set_ylabel("Open Probability", fontsize=12)
-    ax[2].set_title("alpha3")
+    ax[2].set_title("Alpha 3")
 
     for a in ax:
         for ticks in (a.get_xticklabels() + a.get_yticklabels()):
@@ -63,6 +63,54 @@ def diffusion2D_alpha_comparison():
         a.spines['top'].set_visible(False)
 
     fig.tight_layout()
+
+    if save_pth is not None:
+        fname = "nACHR_2D_diffusion_comparison.%s" % fmt
+        fig.savefig(save_pth + fname, bbox_inches="tight")
+
+    plt.show()
+
+
+def alpha7_vs_alpha6(save_pth=None, fmt="png"):
+    a7_builder = gb.loader(gb.alpha7)
+    a6_builder = gb.loader(gb.alpha7, desens_div=4)
+    prox_func = ach_2D(0.0)
+    distal_func = ach_2D(1.1e-6)
+
+    a7_prox = a7_builder(agonist_func=prox_func)
+    a7_distal = a7_builder(agonist_func=distal_func)
+    a6_prox = a6_builder(agonist_func=prox_func)
+    a6_distal = a6_builder(agonist_func=distal_func)
+
+    a7_open_prox = a7_prox.run()["A2R*"]
+    a7_open_distal = a7_distal.run()["A2R*"]
+    a6_open_prox = a6_prox.run()["A2R*"]
+    a6_open_distal = a6_distal.run()["A2R*"]
+
+    fig, ax = plt.subplots(1)
+
+    t = a6_prox.time / 1000
+    ax.plot(a7_prox.time, a7_open_prox, c="C0", label="alpha7 (r = 0)")
+    ax.plot(a7_distal.time, a7_open_distal, c="C1", label="alpha7 (r = 1.1μm)")
+    ax.plot(a6_prox.time, a6_open_prox, c="C0", label="alpha6 (r = 0)", linestyle="--")
+    ax.plot(a6_distal.time, a6_open_distal, c="C1", label="alpha6 (r = 1.1μm)", linestyle="--")
+    ax.set_xlim(0, 25)
+
+    ax.set_ylabel("Open Probability", fontsize=12)
+    ax.set_xlabel("Time (ms)", fontsize=12)
+
+    for ticks in (ax.get_xticklabels() + ax.get_yticklabels()):
+        ticks.set_fontsize(11)
+    ax.legend(frameon=False, fontsize=11)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+
+    fig.tight_layout()
+
+    if save_pth is not None:
+        fname = "alpha7_vs_alpha6.%s" % fmt
+        fig.savefig(save_pth + fname, bbox_inches="tight")
+
     plt.show()
 
 
@@ -453,11 +501,17 @@ def binding_modulation_run(pth, builder, mul_range=10, threeD=False, trans="ach"
         models, multis, recs, probs, metrics = rate_modulation(
             builder, edges, agonists, mul_range)
 
-        # FIXME: Contains lists of ndarrays. Need to stack them into one ndarray
-        # per dict. {"key": [ndarray, ndarray...], ...} -> {"key": ndarray, ...}
+        # TODO: fix recs and probs before they are returned from rate_modulation
+        # then adjust the plotting functions to expect this new data shape.
+        def stack_recs(rs):
+            return {
+                k: np.stack([r[k] for r in rs], axis=0)
+                for k in rs[0].keys()
+            }
+
         data[label] = {
-            "recs": recs,
-            "probs": probs,
+            "recs": {k: stack_recs(v) for k,v in recs.items()},
+            "probs": {k: np.stack(v, axis=0) for k, v in probs.items()},
             "metrics": metrics
         }
 
@@ -482,7 +536,6 @@ def binding_modulation_run(pth, builder, mul_range=10, threeD=False, trans="ach"
 
     model_name = ("%s" % models["prox"].name).replace(" ", "_")
     utils.pack_hdf(pth + model_name + "_rate_mod", data)
-
 
 
 def kd_vs_peak_ratio():
@@ -566,13 +619,15 @@ def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], save_pth=None,
 
 if __name__ == "__main__":
     base_pth = "/mnt/Data/kinetics/"
-    fig_pth = base_pth + "ach_2d/"
+    fig_pth = base_pth + "ach_2d/pdfs/"
     # fig_pth = base_pth + "new_diffusion/"
     if not os.path.isdir(fig_pth):
         os.mkdir(fig_pth)
 
-    fig_fmt="svg"
-    # diffusion2D_alpha_comparison()
+    fig_fmt="pdf"
+
+    diffusion2D_alpha_comparison(save_pth=fig_pth, fmt=fig_fmt)
+    alpha7_vs_alpha6(save_pth=fig_pth, fmt=fig_fmt)
 
     # prox_vs_distal(gb.loader(gb.GABA))
     # prox_vs_distal(gb.loader(gb.AChSnfr))
@@ -629,10 +684,10 @@ if __name__ == "__main__":
         gb.loader(gb.alpha7),
         gb.loader(gb.alpha7, desens_div=4),
     ]
-    for ldr in loaders:
-        binding_modulation_run(
-            fig_pth, ldr, mul_range=10, trans="ach", threeD=False, fmt=fig_fmt
-        )
+    # for ldr in loaders:
+    #     binding_modulation_run(
+    #         fig_pth, ldr, mul_range=10, trans="ach", threeD=False, fmt=fig_fmt
+    #     )
 
     # prox_vs_distal_states(gb.loader(gb.alpha7))
     # prox_vs_distal_states(gb.loader(gb.alpha7, desens_div=4))
