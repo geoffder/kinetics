@@ -72,6 +72,10 @@ def diffusion2D_alpha_comparison(save_pth=None, fmt="png"):
 
 
 def alpha7_vs_alpha6(save_pth=None, fmt="png"):
+    """Overlaid comparison of alpha7 receptor (as ported from Coggan et al.,
+    2005) and the decreased desensitization `alpha6` analog. With less
+    desensitization, peak open probability increases modestly, and decay time
+    increases substantially."""
     a7_builder = gb.loader(gb.alpha7)
     a6_builder = gb.loader(gb.alpha7, desens_div=4)
     prox_func = ach_2D(0.0)
@@ -89,11 +93,11 @@ def alpha7_vs_alpha6(save_pth=None, fmt="png"):
 
     fig, ax = plt.subplots(1)
 
-    t = a6_prox.time / 1000
-    ax.plot(a7_prox.time, a7_open_prox, c="C0", label="alpha7 (r = 0)")
-    ax.plot(a7_distal.time, a7_open_distal, c="C1", label="alpha7 (r = 1.1μm)")
-    ax.plot(a6_prox.time, a6_open_prox, c="C0", label="alpha6 (r = 0)", linestyle="--")
-    ax.plot(a6_distal.time, a6_open_distal, c="C1", label="alpha6 (r = 1.1μm)", linestyle="--")
+    t = a6_prox.time
+    ax.plot(t, a7_open_prox, c="C0", label="alpha7 (r = 0)")
+    ax.plot(t, a7_open_distal, c="C1", label="alpha7 (r = 1.1μm)")
+    ax.plot(t, a6_open_prox, c="C0", label="alpha6 (r = 0)", linestyle="--")
+    ax.plot(t, a6_open_distal, c="C1", label="alpha6 (r = 1.1μm)", linestyle="--")
     ax.set_xlim(0, 25)
 
     ax.set_ylabel("Open Probability", fontsize=12)
@@ -115,6 +119,9 @@ def alpha7_vs_alpha6(save_pth=None, fmt="png"):
 
 
 def gaba_paper_mimic():
+    """Experiment mimicing that found in Petrini et al., 2003. Directly
+    comparable output from the GABA kinetic graph model I ported from their
+    values. (Sanity check that it is the same, thus the graph is working.)"""
     model = gb.loader(gb.GABA)(pulses=[(0, 2, 10)])
     control = total_open(model.run())
     model.update_edge("A2R", "A2D", 2.15)
@@ -140,6 +147,8 @@ def gaba_paper_mimic():
 
 
 def glut_vs_ach_diffusion():
+    """Overlaid comparison of glutamate and acetycholie release/diffusion
+    generated concentration profiles."""
     time_ax = np.arange(1, 25001) * .001  # [ms]
     time = time_ax / 1000  # [s]
 
@@ -189,7 +198,7 @@ def pulse_plot(graph_builder, pulses, title=""):
 
 def prox_vs_distal(graph_builder, threeD=False, trans="ach", title=None,
                    save_pth=None, fmt="png"):
-    """Load kinetic graph with proximal and distal 2D diffusion agonist
+    """Load kinetic graph with proximal and distal diffusion agonist
     profiles, then run it and plot open probability over time for each for
     comparison."""
     if not threeD:
@@ -242,13 +251,25 @@ def prox_vs_distal(graph_builder, threeD=False, trans="ach", title=None,
     plt.show()
 
 
-def prox_vs_distal_states(graph_builder):
-    """Load kinetic graph with proximal and distal 2D diffusion agonist
+def prox_vs_distal_states(graph_builder, threeD, trans="ach"):
+    """Load kinetic graph with proximal and distal diffusion agonist
     profiles, then run it and plot state values of time for both."""
-    # prox_func = disc2D(4700, 7.6e-10, 20e-9, 0)
-    # distal_func = disc2D(4700, 7.6e-10, 20e-9, 1.1e-6)
-    prox_func = disc2D(10000, 4e-10, 20e-9, 0)
-    distal_func = disc2D(10000, 4e-10, 20e-9, 1.1e-6)
+    if not threeD:
+        d_flag = "2D"
+        if trans == "ach":
+            prox_func = ach_2D(0)
+            distal_func = ach_2D(1.1e-6)
+        else:
+            prox_func = glut_2D(0)
+            distal_func = glut_2D(1.1e-6)
+    else:
+        d_flag = "3D"
+        if trans == "ach":
+            prox_func = ach_3D(0)
+            distal_func = ach_3D(1.1e-6)
+        else:
+            prox_func = glut_3D(0)
+            distal_func = glut_3D(1.1e-6)
 
     models = {
         "Proximal": graph_builder(agonist_func=prox_func),
@@ -322,6 +343,8 @@ def rate_modulation(builder, edges, agonist_funcs=None, mul_range=10, plot=True)
             metrics[k]["area"].append(np.sum(probs[k][-1]))
 
     def stack_recs(rs):
+        """Convert dict of list (each modulation level) of dicts (state label to
+        recordings) to dict of ndarrays with shape (Multis, T)."""
         return {
             k: np.stack([r[k] for r in rs], axis=0)
             for k in rs[0].keys()
@@ -346,6 +369,10 @@ def rate_modulation(builder, edges, agonist_funcs=None, mul_range=10, plot=True)
 
 
 def plot_modulation_metrics(multis, metrics, title=""):
+    """Plot peak and delay for proximal and distal receptor probability
+    responses (and the ratio bewteen them) at each rate modulation level. Title
+    used to indicate which modulation condition the metrics are coming from,
+    (e.g. kon, koff, or kon+koff) which should be known in calling function."""
     fig, ax = plt.subplots(2, sharex=True, figsize=(5, 5))
     axr = [a.twinx() for a in ax]
 
@@ -482,6 +509,9 @@ def plot_modulation_states(multis, time, recs, ends=True, title=""):
 
 def binding_modulation_run(pth, builder, mul_range=10, threeD=False, trans="ach",
                            show=False, fmt="png"):
+    """Rate modulation experiments ran with sets of edges representing binding
+    (kon) and unbinding (koff) rates. Results are plotted (saved in format given
+    by `fmt`), and packed into an hdf5 archive."""
     kons = [("R", "AR"), ("AR", "A2R")]
     koffs = [("AR", "R"), ("A2R", "AR")]
     rates = {"kon": kons, "koff": koffs, "kon_koff": kons + koffs}
@@ -570,6 +600,9 @@ def kd_vs_peak_ratio():
 
 def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], save_pth=None,
                    fmt="png"):
+    """Visualize concentration profiles at the given radii (generally a proximal
+    and a distal site) that result from diffusion of ach or glut release events.
+    2D diffusion, 3D diffusion, or both can be included (set by spaces list)."""
     time_ax = np.arange(1, 25001) * .001  # [ms]
     time = time_ax / 1000  # [s]
 
@@ -623,7 +656,7 @@ if __name__ == "__main__":
     fig_fmt="png"
 
     # diffusion2D_alpha_comparison(save_pth=fig_pth, fmt=fig_fmt)
-    # alpha7_vs_alpha6(save_pth=fig_pth, fmt=fig_fmt)
+    alpha7_vs_alpha6(save_pth=fig_pth, fmt=fig_fmt)
 
     # prox_vs_distal(gb.loader(gb.GABA))
     # prox_vs_distal(gb.loader(gb.AChSnfr))
@@ -680,10 +713,10 @@ if __name__ == "__main__":
         # gb.loader(gb.alpha7),
         # gb.loader(gb.alpha7, desens_div=4),
     ]
-    for ldr in loaders:
-        binding_modulation_run(
-            fig_pth, ldr, mul_range=10, trans="ach", threeD=False, fmt=fig_fmt
-        )
+    # for ldr in loaders:
+    #     binding_modulation_run(
+    #         fig_pth, ldr, mul_range=10, trans="ach", threeD=False, fmt=fig_fmt
+    #     )
 
     # prox_vs_distal_states(gb.loader(gb.alpha7))
     # prox_vs_distal_states(gb.loader(gb.alpha7, desens_div=4))
