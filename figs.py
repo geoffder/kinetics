@@ -139,21 +139,21 @@ def gaba_paper_mimic():
     plt.show()
 
 
-def updated_diffusion():
+def glut_vs_ach_diffusion():
     time_ax = np.arange(1, 25001) * .001  # [ms]
     time = time_ax / 1000  # [s]
 
-    centre_og = disc2D(4700, 7.6e-10, 20e-9, 0.)(time) / 1000
-    dist_og = disc2D(4700, 7.6e-10, 20e-9, 1.1e-6)(time) / 1000
+    prox_glut = disc2D(4700, 7.6e-10, 20e-9, 0.)(time) / 1000
+    dist_glut = disc2D(4700, 7.6e-10, 20e-9, 1.1e-6)(time) / 1000
 
-    centre_new = disc2D(10000, 4e-10, 20e-9, 0.)(time) / 1000
-    dist_new = disc2D(10000, 4e-10, 20e-9, 1.1e-6)(time) / 1000
+    prox_ach = disc2D(10000, 4e-10, 20e-9, 0.)(time) / 1000
+    dist_ach = disc2D(10000, 4e-10, 20e-9, 1.1e-6)(time) / 1000
 
     fig, ax = plt.subplots(1, figsize=(5, 5))
-    ax.plot(time_ax, centre_og, c="k", label="r = 0")
-    ax.plot(time_ax, dist_og, c=".5", label="r = 1.1μm")
-    ax.plot(time_ax, centre_new, c="k", linestyle="--", label="r = 0 (ACH)")
-    ax.plot(time_ax, dist_new, c=".5", linestyle="--", label="r = 1.1μm (ACH)")
+    ax.plot(time_ax, prox_glut, c="k", label="r = 0")
+    ax.plot(time_ax, dist_glut, c=".5", label="r = 1.1μm")
+    ax.plot(time_ax, prox_ach, c="k", linestyle="--", label="r = 0 (ACH)")
+    ax.plot(time_ax, dist_ach, c=".5", linestyle="--", label="r = 1.1μm (ACH)")
     ax.set_yscale("log")
     ax.set_ylim(5e-7, 1e-3)
     ax.set_xlim(0, 5)
@@ -321,10 +321,20 @@ def rate_modulation(builder, edges, agonist_funcs=None, mul_range=10, plot=True)
             )
             metrics[k]["area"].append(np.sum(probs[k][-1]))
 
+    def stack_recs(rs):
+        return {
+            k: np.stack([r[k] for r in rs], axis=0)
+            for k in rs[0].keys()
+        }
+
+    # repackage data as ndarrays, wather than lists, collapse some dicts.
+    multis = np.array(multis)
+    recs = {k: stack_recs(v) for k, v in recs.items()}
     metrics = {
         model: {metric: np.array(v2) for metric, v2 in v1.items()}
         for model, v1 in metrics.items()
     }
+    probs = {k: np.stack(v, axis=0) for k, v in probs.items()}
 
     if plot == True:
         edge_str = ", ".join([" → ".join(e) for e in edges])
@@ -389,12 +399,12 @@ def plot_modulation_open_prob(multis, time, probs, ends=True, title=""):
     if ends:
         idxs = [0] + idxs + [len(multis) - 1]
 
-    multis = [multis[i] for i in idxs]
-    probs = {k: [v[i] for i in idxs] for k, v in probs.items()}
+    prox_probs = probs["prox"][idxs]
+    distal_probs = probs["distal"][idxs]
 
     fig, ax = plt.subplots(1, len(idxs), sharey=True, figsize=(8, 5))
 
-    for a, m, prox, distal in zip(ax, multis, probs["prox"], probs["distal"]):
+    for a, m, prox, distal in zip(ax, multis[idxs], prox_probs, distal_probs):
         a.plot(time, prox, label="Proximal (0μm)")
         a.plot(time, distal, label="Distal (1.1μm)")
         a.set_title("x %.2f" % m, fontsize=12)
@@ -432,9 +442,6 @@ def plot_modulation_states(multis, time, recs, ends=True, title=""):
     if ends:
         idxs = [0] + idxs + [len(multis) - 1]
 
-    multis = [multis[i] for i in idxs]
-    recs = {k: [v[i] for i in idxs] for k, v in recs.items()}
-
     fig, ax = plt.subplots(
         len(idxs), 2, sharex=True, sharey=True, figsize=(7, 10))
     # unzip axes from rows in to column-major organization
@@ -446,13 +453,14 @@ def plot_modulation_states(multis, time, recs, ends=True, title=""):
         col[-1].set_xlabel("Time (ms)", fontsize=12)
         for ticks in (col[-1].get_xticklabels()):
             ticks.set_fontsize(11)
-        for m, states, a in zip(multis, rec, col):
-            for label, s in states.items():
-                a.plot(time, s, label=label)
+        # plot appropriate index from each state recording ndarray on each axis
+        for i, a in zip(idxs, col):
+            for label, state in rec.items():
+                a.plot(time, state[i], label=label)
             a.spines["right"].set_visible(False)
             a.spines["top"].set_visible(False)
 
-    for m, a in zip(multis, ax[0]):
+    for m, a in zip(multis[idxs], ax[0]):
         a.set_ylabel("x %.2f" % m, fontsize=12)
         for ticks in (a.get_yticklabels()):
             ticks.set_fontsize(11)
@@ -501,19 +509,7 @@ def binding_modulation_run(pth, builder, mul_range=10, threeD=False, trans="ach"
         models, multis, recs, probs, metrics = rate_modulation(
             builder, edges, agonists, mul_range)
 
-        # TODO: fix recs and probs before they are returned from rate_modulation
-        # then adjust the plotting functions to expect this new data shape.
-        def stack_recs(rs):
-            return {
-                k: np.stack([r[k] for r in rs], axis=0)
-                for k in rs[0].keys()
-            }
-
-        data[label] = {
-            "recs": {k: stack_recs(v) for k,v in recs.items()},
-            "probs": {k: np.stack(v, axis=0) for k, v in probs.items()},
-            "metrics": metrics
-        }
+        data[label] = {"recs": recs, "probs": probs, "metrics": metrics}
 
         # edge_str = ", ".join([" → ".join(e) for e in edges])
         # title = "%s; %s; (Space %s)" % (models["prox"].name, edge_str, d_flag)
@@ -624,10 +620,10 @@ if __name__ == "__main__":
     if not os.path.isdir(fig_pth):
         os.mkdir(fig_pth)
 
-    fig_fmt="pdf"
+    fig_fmt="png"
 
-    diffusion2D_alpha_comparison(save_pth=fig_pth, fmt=fig_fmt)
-    alpha7_vs_alpha6(save_pth=fig_pth, fmt=fig_fmt)
+    # diffusion2D_alpha_comparison(save_pth=fig_pth, fmt=fig_fmt)
+    # alpha7_vs_alpha6(save_pth=fig_pth, fmt=fig_fmt)
 
     # prox_vs_distal(gb.loader(gb.GABA))
     # prox_vs_distal(gb.loader(gb.AChSnfr))
@@ -681,13 +677,13 @@ if __name__ == "__main__":
 
     loaders = [
         gb.loader(gb.alpha3),
-        gb.loader(gb.alpha7),
-        gb.loader(gb.alpha7, desens_div=4),
+        # gb.loader(gb.alpha7),
+        # gb.loader(gb.alpha7, desens_div=4),
     ]
-    # for ldr in loaders:
-    #     binding_modulation_run(
-    #         fig_pth, ldr, mul_range=10, trans="ach", threeD=False, fmt=fig_fmt
-    #     )
+    for ldr in loaders:
+        binding_modulation_run(
+            fig_pth, ldr, mul_range=10, trans="ach", threeD=False, fmt=fig_fmt
+        )
 
     # prox_vs_distal_states(gb.loader(gb.alpha7))
     # prox_vs_distal_states(gb.loader(gb.alpha7, desens_div=4))
