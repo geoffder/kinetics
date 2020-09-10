@@ -45,6 +45,8 @@ def space3D(molecules, D, r, alpha=.21, lam=1.55):
 
 
 def ach_2D(radius):
+    """Number of molecules based on median vesicle contents measured by Coggan
+    et al. 2005, and diffusion coefficient from Land et al. 1984."""
     return disc2D(10000, 4e-10, 20e-9, radius)
 
 
@@ -53,10 +55,13 @@ def ach_3D(radius):
 
 
 def glut_2D(radius):
+    """Numbers directly from Barbour and Hausser."""
     return disc2D(4700, 7.6e-10, 20e-9, radius)
 
 
 def glut_3D(radius):
+    """Barbour and Hausser parameters, but with lower alpha (smaller volume
+    fraction => higher concentration)"""
     return space3D(4700, 7.6e-10, radius, alpha=.12)
 
 
