@@ -51,7 +51,7 @@ def ach_2D(radius):
 
 
 def ach_3D(radius):
-    return space3D(10000, 4e-10, radius, alpha=.12)
+    return space3D(10000, 4e-10, radius, alpha=.21)
 
 
 def glut_2D(radius):
@@ -62,7 +62,7 @@ def glut_2D(radius):
 def glut_3D(radius):
     """Barbour and Hausser parameters, but with lower alpha (smaller volume
     fraction => higher concentration)"""
-    return space3D(4700, 7.6e-10, radius, alpha=.12)
+    return space3D(4700, 7.6e-10, radius, alpha=.21)
 
 
 if __name__ == "__main__":
