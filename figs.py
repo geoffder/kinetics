@@ -597,12 +597,12 @@ def kd_vs_peak_ratio():
     plt.show()
 
 
-def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], save_pth=None,
-                   fmt="png"):
+def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], duration=25000,
+                   save_pth=None, fmt="png"):
     """Visualize concentration profiles at the given radii (generally a proximal
     and a distal site) that result from diffusion of ach or glut release events.
     2D diffusion, 3D diffusion, or both can be included (set by spaces list)."""
-    time_ax = np.arange(1, 25001) * .001  # [ms]
+    time_ax = np.arange(1, duration + 1) * .001  # [ms]
     time = time_ax / 1000  # [s]
 
     funcs = {}
@@ -626,7 +626,7 @@ def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], save_pth=None,
 
     ax.set_yscale("log")
     ax.set_ylim(5e-7, 1e-3)
-    ax.set_xlim(0, 5)
+    ax.set_xlim(0)
     ax.set_ylabel("Concentration (M)", fontsize=12)
     ax.set_xlabel("Time (ms)", fontsize=12)
     ax.legend(frameon=False, fontsize=11)
@@ -645,6 +645,55 @@ def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], save_pth=None,
     plt.show()
 
 
+def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="ach",
+                      title=None, save_pth=None, fmt="png"):
+    """"""
+    if trans == "ach":
+        mols = 10000
+        coef = 4e-10
+    else:
+        mols = 4700
+        coef = 7.6e-10
+
+    funcs = {
+        "%.2f" % a: {
+            "%.1f" % r: space3D(mols, coef, r * 1e-6, alpha=a) for r in radii
+        }
+        for a in alphas
+    }
+
+    fig, ax = plt.subplots(2, sharex=True, figsize=(5, 8))
+
+    for a in funcs.keys():
+        for r in funcs[a].keys():
+            l = "alpha = %s, r = %sμm" % (a, r)
+            f = funcs[a][r]
+            m = graph_builder(agonist_func=f)
+            t = m.time / 1000
+            ax[0].plot(m.time, f(t) / 1000, label=l)
+            ax[1].plot(m.time, total_open(m.run()), label=l)
+
+    ax[0].set_ylabel("Concentration (M)", fontsize=12)
+    ax[0].set_yscale("log")
+    ax[0].set_ylim(5e-7, 1e-3)
+    ax[1].set_xlabel("Time (ms)", fontsize=12)
+    ax[1].set_ylabel("Open Probability", fontsize=12)
+    # ax[1].set_xlim(0)
+
+    if title is None:
+        fig.suptitle(title)
+
+    for a in ax:
+        for ticks in (a.get_xticklabels() + a.get_yticklabels()):
+            ticks.set_fontsize(11)
+        a.legend(frameon=False, fontsize=11)
+        a.spines['right'].set_visible(False)
+        a.spines['top'].set_visible(False)
+
+    fig.tight_layout()
+    plt.show()
+
+
 if __name__ == "__main__":
     base_pth = "/mnt/Data/kinetics/"
     fig_pth = base_pth + "ach_2d/pdfs/"
@@ -655,12 +704,12 @@ if __name__ == "__main__":
     fig_fmt="png"
 
     # diffusion2D_alpha_comparison(save_pth=fig_pth, fmt=fig_fmt)
-    alpha7_vs_alpha6(save_pth=fig_pth, fmt=fig_fmt)
+    # alpha7_vs_alpha6(save_pth=fig_pth, fmt=fig_fmt)
 
     # prox_vs_distal(gb.loader(gb.GABA))
     # prox_vs_distal(gb.loader(gb.AChSnfr))
     # prox_vs_distal(gb.loader(gb.alpha7), save_pth=fig_pth, title="Alpha 7 nACHR", fmt=fig_fmt)
-    # prox_vs_distal(gb.loader(gb.alpha7, desens_div=4), threeD=False, save_pth=fig_pth,
+    # prox_vs_distal(gb.loader(gb.alpha7, desens_div=4), threeD=True, save_pth=fig_pth,
     #                title="Alpha 6 nACHR", fmt=fig_fmt)
     # prox_vs_distal(gb.loader(gb.Pesti_alpha7))
     # prox_vs_distal(gb.loader(gb.McCormack_alpha7))
@@ -722,4 +771,5 @@ if __name__ == "__main__":
     # prox_vs_distal_states(gb.loader(gb.alpha3))
     # kd_vs_peak_ratio()
 
-    # plot_diffusion(spaces=[2], save_pth=fig_pth, fmt="png")
+    # plot_diffusion(spaces=[2], save_pth=fig_pth, fmt="pdf")
+    volume_comparison(gb.loader(gb.alpha7, desens_div=4), alphas=[.21, .1, .05])
