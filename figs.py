@@ -647,7 +647,13 @@ def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], duration=25000,
 
 def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="ach",
                       title=None, save_pth=None, fmt="png"):
-    """"""
+    """Simple comparison of diffusion profiles and receptor open probability
+    response at varying 3D volume fraction `alphas` and radii. Alpha levels cycle
+    through linestyles, and radii through colours. Only including 4 levels to
+    cycle for each since the figure quickly becomes cluttered."""
+    linestyles = ["-", "--", "-.", ":"]      # up to 4 alpha levels
+    colours = ["C%i" % i for i in range(4)]  # up to 4 radius levels
+
     if trans == "ach":
         mols = 10000
         coef = 4e-10
@@ -664,14 +670,14 @@ def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="a
 
     fig, ax = plt.subplots(2, sharex=True, figsize=(5, 8))
 
-    for a in funcs.keys():
-        for r in funcs[a].keys():
+    for a, clr in zip(funcs.keys(), colours):
+        for r, ls in zip(funcs[a].keys(), linestyles):
             l = "alpha = %s, r = %sμm" % (a, r)
             f = funcs[a][r]
             m = graph_builder(agonist_func=f)
             t = m.time / 1000
-            ax[0].plot(m.time, f(t) / 1000, label=l)
-            ax[1].plot(m.time, total_open(m.run()), label=l)
+            ax[0].plot(m.time, f(t) / 1000, c=clr, ls=ls, label=l)
+            ax[1].plot(m.time, total_open(m.run()), c=clr, ls=ls, label=l)
 
     ax[0].set_ylabel("Concentration (M)", fontsize=12)
     ax[0].set_yscale("log")
@@ -679,6 +685,68 @@ def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="a
     ax[1].set_xlabel("Time (ms)", fontsize=12)
     ax[1].set_ylabel("Open Probability", fontsize=12)
     # ax[1].set_xlim(0)
+
+    if title is None:
+        fig.suptitle(title)
+
+    for a in ax:
+        for ticks in (a.get_xticklabels() + a.get_yticklabels()):
+            ticks.set_fontsize(11)
+        a.legend(frameon=False, fontsize=11)
+        a.spines['right'].set_visible(False)
+        a.spines['top'].set_visible(False)
+
+    fig.tight_layout()
+    plt.show()
+
+
+def volume_curve(graph_builder, radii=[0., 1.1], trans="ach", title=None,
+                 save_pth=None, fmt="png"):
+    """Run through a range of volume fraction (alpha) values and plot the
+    resulting peak probabilities and peak delays for a given receptor model with
+    the set of radii provided."""
+    colours = ["C%i" % i for i in range(4)]  # up to 4 radius levels
+
+    if trans == "ach":
+        mols = 10000
+        coef = 4e-10
+    else:
+        mols = 4700
+        coef = 7.6e-10
+
+    # TODO: Parameterize
+    step = .01
+    alphas = [i * step for i in range(1, 50)]
+    dt = .01
+
+    funcs = {
+        "%.1f" % r: [space3D(mols, coef, r * 1e-6, alpha=a) for a in alphas]
+        for r in radii
+    }
+
+    probs = {
+        r_k: np.stack(
+            [total_open(graph_builder(agonist_func=f).run()) for f in fs], axis=0)
+        for r_k, fs in funcs.items()
+    }
+
+    peaks = {r_k: np.max(p, axis=1) for r_k, p in probs.items()}
+    delays = {
+        r_k: np.where(
+            prbs == np.broadcast_to(pks.reshape(-1, 1), prbs.shape))[1] * dt
+        for (r_k, prbs), pks in zip(probs.items(), peaks.values())
+    }
+
+    fig, ax = plt.subplots(2, sharex=True)
+
+    for (r_k, pks), dels, clr in zip(peaks.items(), delays.values(), colours):
+        l = "r = %sμm" % r_k
+        ax[0].plot(alphas, pks, c=clr, label=l)
+        ax[1].plot(alphas, dels, c=clr, label=l)
+
+    ax[0].set_ylabel("Peak Open Probability", fontsize=12)
+    ax[1].set_ylabel("Delay", fontsize=12)
+    ax[1].set_xlabel("Time (ms)", fontsize=12)
 
     if title is None:
         fig.suptitle(title)
@@ -772,4 +840,5 @@ if __name__ == "__main__":
     # kd_vs_peak_ratio()
 
     # plot_diffusion(spaces=[2], save_pth=fig_pth, fmt="pdf")
-    volume_comparison(gb.loader(gb.alpha7, desens_div=4), alphas=[.21, .1, .05])
+    # volume_comparison(gb.loader(gb.alpha7, desens_div=4), alphas=[.21, .01])
+    # volume_curve(gb.loader(gb.alpha7, desens_div=4))
