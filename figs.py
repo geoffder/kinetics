@@ -686,8 +686,11 @@ def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="a
     ax[1].set_ylabel("Open Probability", fontsize=12)
     # ax[1].set_xlim(0)
 
+    name = graph_builder().name
     if title is None:
-        fig.suptitle(title)
+        title = "%s %s" % (name, trans)
+
+    fig.suptitle(title)
 
     for a in ax:
         for ticks in (a.get_xticklabels() + a.get_yticklabels()):
@@ -697,11 +700,16 @@ def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="a
         a.spines['top'].set_visible(False)
 
     fig.tight_layout()
+
+    if save_pth is not None:
+        fname = "%s_volume_comparison_%s.%s" % (name, trans, fmt)
+        fig.savefig(save_pth + fname, bbox_inches="tight")
+
     plt.show()
 
 
-def volume_curve(graph_builder, radii=[0., 1.1], trans="ach", title=None,
-                 save_pth=None, fmt="png"):
+def volume_curve(graph_builder, vol_step=.01, vol_max=.5, radii=[0., 1.1],
+                 trans="ach", title=None, save_pth=None, fmt="png"):
     """Run through a range of volume fraction (alpha) values and plot the
     resulting peak probabilities and peak delays for a given receptor model with
     the set of radii provided."""
@@ -714,10 +722,11 @@ def volume_curve(graph_builder, radii=[0., 1.1], trans="ach", title=None,
         mols = 4700
         coef = 7.6e-10
 
-    # TODO: Parameterize
-    step = .01
-    alphas = [i * step for i in range(1, 50)]
-    dt = .001
+    alphas = np.arange(vol_step, vol_max, vol_step)
+
+    model_ex = graph_builder()
+    name = model_ex.name
+    dt = model_ex.dt
 
     funcs = {
         "%.1f" % r: [space3D(mols, coef, r * 1e-6, alpha=a) for a in alphas]
@@ -749,7 +758,9 @@ def volume_curve(graph_builder, radii=[0., 1.1], trans="ach", title=None,
     ax[1].set_xlabel("Volume Fraction", fontsize=12)
 
     if title is None:
-        fig.suptitle(title)
+        title = "%s %s" % (name, trans)
+
+    fig.suptitle(title)
 
     for a in ax:
         for ticks in (a.get_xticklabels() + a.get_yticklabels()):
@@ -759,6 +770,11 @@ def volume_curve(graph_builder, radii=[0., 1.1], trans="ach", title=None,
         a.spines['top'].set_visible(False)
 
     fig.tight_layout()
+
+    if save_pth is not None:
+        fname = "%s_volume_curve_%s.%s" % (name, trans, fmt)
+        fig.savefig(save_pth + fname, bbox_inches="tight")
+
     plt.show()
 
 
@@ -783,7 +799,10 @@ def radius_curve(graph_builder, trans="ach", radius_max=1.1, radius_step=.01,
             func = glut_3D
 
     radii = np.arange(0, radius_max, radius_step)
-    dt = .001
+
+    model_ex = graph_builder()
+    name = model_ex.name
+    dt = model_ex.dt
 
     probs = np.stack([
         total_open(graph_builder(agonist_func=func(r * 1e-6)).run())
@@ -816,8 +835,10 @@ def radius_curve(graph_builder, trans="ach", radius_max=1.1, radius_step=.01,
     comp_ax[1].set_xlabel("Radius (μm)", fontsize=12)
 
     if title is None:
-        rads_fig.suptitle(title)
-        comp_fig.suptitle(title)
+        title = "%s %s %s" % (name, trans, d_flag)
+
+    rads_fig.suptitle(title)
+    comp_fig.suptitle(title)
 
     for ax in [rads_ax, comp_ax]:
         for a in rads_ax:
@@ -831,6 +852,13 @@ def radius_curve(graph_builder, trans="ach", radius_max=1.1, radius_step=.01,
 
     rads_fig.tight_layout()
     comp_fig.tight_layout()
+
+    if save_pth is not None:
+        rads_fname = "%s_radius_curve_%s%s.%s" % (name, trans, d_flag, fmt)
+        comp_fname = "%s_radius_comparison_%s%s.%s" % (name, trans, d_flag, fmt)
+        rads_fig.savefig(save_pth + rads_fname, bbox_inches="tight")
+        comp_fig.savefig(save_pth + comp_fname, bbox_inches="tight")
+
     plt.show()
 
 
@@ -912,6 +940,6 @@ if __name__ == "__main__":
     # kd_vs_peak_ratio()
 
     # plot_diffusion(spaces=[2], save_pth=fig_pth, fmt="pdf")
-    # volume_comparison(gb.loader(gb.alpha7, desens_div=4), alphas=[.21, .01])
-    # volume_curve(gb.loader(gb.alpha7, desens_div=4))
-    radius_curve(gb.loader(gb.alpha7, desens_div=4), threeD=True)
+    # volume_comparison(gb.loader(gb.alpha7, desens_div=4), alphas=[.21, .01], save_pth=fig_pth)
+    # volume_curve(gb.loader(gb.alpha7, desens_div=4), save_pth=fig_pth)
+    # radius_curve(gb.loader(gb.alpha7, desens_div=4), save_pth=fig_pth)
