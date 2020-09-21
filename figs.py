@@ -717,7 +717,7 @@ def volume_curve(graph_builder, radii=[0., 1.1], trans="ach", title=None,
     # TODO: Parameterize
     step = .01
     alphas = [i * step for i in range(1, 50)]
-    dt = .01
+    dt = .001
 
     funcs = {
         "%.1f" % r: [space3D(mols, coef, r * 1e-6, alpha=a) for a in alphas]
@@ -746,7 +746,7 @@ def volume_curve(graph_builder, radii=[0., 1.1], trans="ach", title=None,
 
     ax[0].set_ylabel("Peak Open Probability", fontsize=12)
     ax[1].set_ylabel("Delay", fontsize=12)
-    ax[1].set_xlabel("Time (ms)", fontsize=12)
+    ax[1].set_xlabel("Volume Fraction", fontsize=12)
 
     if title is None:
         fig.suptitle(title)
@@ -759,6 +759,78 @@ def volume_curve(graph_builder, radii=[0., 1.1], trans="ach", title=None,
         a.spines['top'].set_visible(False)
 
     fig.tight_layout()
+    plt.show()
+
+
+def radius_curve(graph_builder, trans="ach", radius_max=1.1, radius_step=.01,
+                 threeD=False, title=None, save_pth=None, fmt="png"):
+    """Run through a range of radii values, for proximal and distal sites and
+    plot the resulting peak probabilities and peak delays for a given receptor
+    model, and the differences. Comparisons are made between holding the proximal
+    site at 0 and bringing the distal site closer, and holding the distal site
+    at some maximum, while moving the proximal site further away from release."""
+    if not threeD:
+        d_flag = "2D"
+        if trans == "ach":
+            func = ach_2D
+        else:
+            func = glut_2D
+    else:
+        d_flag = "3D"
+        if trans == "ach":
+            func = ach_3D
+        else:
+            func = glut_3D
+
+    radii = np.arange(0, radius_max, radius_step)
+    dt = .001
+
+    probs = np.stack([
+        total_open(graph_builder(agonist_func=func(r * 1e-6)).run())
+        for r in radii
+    ], axis=0)
+
+    peaks = np.max(probs, axis=1)
+    delays = np.where(
+        probs == np.broadcast_to(peaks.reshape(-1, 1), probs.shape))[1] * dt
+
+    rads_fig, rads_ax = plt.subplots(2, sharex=True)
+
+    rads_ax[0].plot(radii, peaks)
+    rads_ax[1].plot(radii, delays)
+
+    rads_ax[0].set_ylabel("Peak Open Probability", fontsize=12)
+    rads_ax[1].set_ylabel("Time to Peak (ms)", fontsize=12)
+    rads_ax[1].set_xlabel("Radius (μm)", fontsize=12)
+
+    comp_fig, comp_ax = plt.subplots(2, sharex=True)
+
+    comp_ax[0].plot(radii, peaks[0] / peaks, label="Increasing Distal Radius")
+    comp_ax[0].plot(radii, peaks / peaks[-1], label="Increasing Proximal Radius")
+
+    comp_ax[1].plot(radii, delays - delays[0], label="Increasing Distal Radius")
+    comp_ax[1].plot(radii, delays[-1] - delays, label="Increasing Proximal Radius")
+
+    comp_ax[0].set_ylabel("Proximal / Distal Peak", fontsize=12)
+    comp_ax[1].set_ylabel("Delay (ms)", fontsize=12)
+    comp_ax[1].set_xlabel("Radius (μm)", fontsize=12)
+
+    if title is None:
+        rads_fig.suptitle(title)
+        comp_fig.suptitle(title)
+
+    for ax in [rads_ax, comp_ax]:
+        for a in rads_ax:
+            for ticks in (a.get_xticklabels() + a.get_yticklabels()):
+                ticks.set_fontsize(11)
+            a.spines['right'].set_visible(False)
+            a.spines['top'].set_visible(False)
+
+    for a in comp_ax:
+        a.legend(frameon=False, fontsize=11)
+
+    rads_fig.tight_layout()
+    comp_fig.tight_layout()
     plt.show()
 
 
@@ -842,3 +914,4 @@ if __name__ == "__main__":
     # plot_diffusion(spaces=[2], save_pth=fig_pth, fmt="pdf")
     # volume_comparison(gb.loader(gb.alpha7, desens_div=4), alphas=[.21, .01])
     # volume_curve(gb.loader(gb.alpha7, desens_div=4))
+    radius_curve(gb.loader(gb.alpha7, desens_div=4), threeD=True)
