@@ -841,7 +841,7 @@ def radius_curve(graph_builder, trans="ach", radius_max=1.1, radius_step=.01,
     comp_fig.suptitle(title)
 
     for ax in [rads_ax, comp_ax]:
-        for a in rads_ax:
+        for a in ax:
             for ticks in (a.get_xticklabels() + a.get_yticklabels()):
                 ticks.set_fontsize(11)
             a.spines['right'].set_visible(False)
