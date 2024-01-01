@@ -55,11 +55,11 @@ def diffusion2D_alpha_comparison(save_pth=None, fmt="png"):
     ax[2].set_title("Alpha 3")
 
     for a in ax:
-        for ticks in (a.get_xticklabels() + a.get_yticklabels()):
+        for ticks in a.get_xticklabels() + a.get_yticklabels():
             ticks.set_fontsize(11)
         a.legend(frameon=False, fontsize=11)
-        a.spines['right'].set_visible(False)
-        a.spines['top'].set_visible(False)
+        a.spines["right"].set_visible(False)
+        a.spines["top"].set_visible(False)
 
     fig.tight_layout()
 
@@ -102,11 +102,11 @@ def alpha7_vs_alpha6(save_pth=None, fmt="png"):
     ax.set_ylabel("Open Probability", fontsize=12)
     ax.set_xlabel("Time (ms)", fontsize=12)
 
-    for ticks in (ax.get_xticklabels() + ax.get_yticklabels()):
+    for ticks in ax.get_xticklabels() + ax.get_yticklabels():
         ticks.set_fontsize(11)
     ax.legend(frameon=False, fontsize=11)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
 
     fig.tight_layout()
 
@@ -126,20 +126,20 @@ def gaba_paper_mimic():
     model.update_edge("A2R", "A2D", 2.15)
     nocodazole = total_open(model.run())
 
-    fig, ax = plt.subplots(1, figsize=(3., 3.5))
+    fig, ax = plt.subplots(1, figsize=(3.0, 3.5))
     ax.plot(model.time, control, label="Control")
     ax.plot(model.time, nocodazole, label="Nocodazole")
     ax.set_xlim(-1, 20)
-    ax.set_ylim(0, .6)
+    ax.set_ylim(0, 0.6)
     ax.set_xlabel("Time (ms)", fontsize=12)
     ax.set_ylabel("Open Probability", fontsize=12)
     ax.set_title("GABAR; 2ms pulse @ 10mM")
 
-    for ticks in (ax.get_xticklabels() + ax.get_yticklabels()):
+    for ticks in ax.get_xticklabels() + ax.get_yticklabels():
         ticks.set_fontsize(11)
     ax.legend(frameon=False, fontsize=11)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
 
     fig.tight_layout()
     plt.show()
@@ -148,13 +148,13 @@ def gaba_paper_mimic():
 def glut_vs_ach_diffusion():
     """Overlaid comparison of glutamate and acetycholie release/diffusion
     generated concentration profiles."""
-    time_ax = np.arange(1, 25001) * .001  # [ms]
+    time_ax = np.arange(1, 25001) * 0.001  # [ms]
     time = time_ax / 1000  # [s]
 
-    prox_glut = disc2D(4700, 7.6e-10, 20e-9, 0.)(time) / 1000
+    prox_glut = disc2D(4700, 7.6e-10, 20e-9, 0.0)(time) / 1000
     dist_glut = disc2D(4700, 7.6e-10, 20e-9, 1.1e-6)(time) / 1000
 
-    prox_ach = disc2D(10000, 4e-10, 20e-9, 0.)(time) / 1000
+    prox_ach = disc2D(10000, 4e-10, 20e-9, 0.0)(time) / 1000
     dist_ach = disc2D(10000, 4e-10, 20e-9, 1.1e-6)(time) / 1000
 
     fig, ax = plt.subplots(1, figsize=(5, 5))
@@ -169,10 +169,10 @@ def glut_vs_ach_diffusion():
     ax.set_xlabel("Time (ms)", fontsize=12)
     ax.legend(frameon=False, fontsize=11)
 
-    for ticks in (ax.get_xticklabels() + ax.get_yticklabels()):
+    for ticks in ax.get_xticklabels() + ax.get_yticklabels():
         ticks.set_fontsize(11)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
 
     plt.tight_layout()
     plt.show()
@@ -195,8 +195,9 @@ def pulse_plot(graph_builder, pulses, title=""):
     plt.show()
 
 
-def prox_vs_distal(graph_builder, threeD=False, trans="ach", title=None,
-                   save_pth=None, fmt="png"):
+def prox_vs_distal(
+    graph_builder, threeD=False, trans="ach", title=None, save_pth=None, fmt="png"
+):
     """Load kinetic graph with proximal and distal diffusion agonist
     profiles, then run it and plot open probability over time for each for
     comparison."""
@@ -235,11 +236,11 @@ def prox_vs_distal(graph_builder, threeD=False, trans="ach", title=None,
         title = "%s (Space %s)" % (model_prox.name, d_flag)
     ax.set_title(title)
 
-    for ticks in (ax.get_xticklabels() + ax.get_yticklabels()):
+    for ticks in ax.get_xticklabels() + ax.get_yticklabels():
         ticks.set_fontsize(11)
     ax.legend(frameon=False, fontsize=11)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
 
     fig.tight_layout()
 
@@ -272,7 +273,7 @@ def prox_vs_distal_states(graph_builder, threeD, trans="ach"):
 
     models = {
         "Proximal": graph_builder(agonist_func=prox_func),
-        "Distal": graph_builder(agonist_func=distal_func)
+        "Distal": graph_builder(agonist_func=distal_func),
     }
     recs = {k: model.run() for k, model in models.items()}
 
@@ -284,10 +285,10 @@ def prox_vs_distal_states(graph_builder, threeD, trans="ach"):
         a.set_xlabel("Time (ms)", fontsize=12)
         a.set_title(name, fontsize=14)
 
-        for ticks in (a.get_xticklabels() + a.get_yticklabels()):
+        for ticks in a.get_xticklabels() + a.get_yticklabels():
             ticks.set_fontsize(11)
-        a.spines['right'].set_visible(False)
-        a.spines['top'].set_visible(False)
+        a.spines["right"].set_visible(False)
+        a.spines["top"].set_visible(False)
 
     ax[0].legend(frameon=False, fontsize=11)
     ax[0].set_ylabel("Probability", fontsize=12)
@@ -304,27 +305,20 @@ def rate_modulation(builder, edges, agonist_funcs=None, mul_range=10, plot=True)
     over time, and calculated descriptive metrics.
     """
     if agonist_funcs is None:
-        agonists_funcs = {
+        agonist_funcs = {
             "prox": disc2D(4700, 7.6e-10, 20e-9, 0),
             "distal": disc2D(4700, 7.6e-10, 20e-9, 1.1e-6),
         }
 
     models = {k: builder(agonist_func=f) for k, f in agonist_funcs.items()}
-    base_rates = [
-        models["prox"].nodes[n1].out_edges[n2]["Rate"]
-        for (n1, n2) in edges
-    ]
+    base_rates = [models["prox"].nodes[n1].out_edges[n2]["Rate"] for (n1, n2) in edges]
     multis = np.array(
-        [1 / i for i in range(mul_range, 0, -1)]
-        + list(range(2, mul_range + 1))
+        [1 / i for i in range(mul_range, 0, -1)] + list(range(2, mul_range + 1))
     )
 
     recs = {k: [] for k in models.keys()}
     probs = {k: [] for k in models.keys()}
-    metrics = {
-        k: {"peak": [], "peak_time": [], "area": []}
-        for k in models.keys()
-    }
+    metrics = {k: {"peak": [], "peak_time": [], "area": []} for k in models.keys()}
 
     for m in multis:
         for (n1, n2), base in zip(edges, base_rates):
@@ -336,18 +330,14 @@ def rate_modulation(builder, edges, agonist_funcs=None, mul_range=10, plot=True)
             probs[k].append(total_open(rec))
             metrics[k]["peak"].append(np.max(probs[k][-1]))
             metrics[k]["peak_time"].append(
-                np.where(probs[k][-1] == metrics[k]["peak"][-1])[0][0]
-                * model.dt
+                np.where(probs[k][-1] == metrics[k]["peak"][-1])[0][0] * model.dt
             )
             metrics[k]["area"].append(np.sum(probs[k][-1]))
 
     def stack_recs(rs):
         """Convert dict of list (each modulation level) of dicts (state label to
         recordings) to dict of ndarrays with shape (Multis, T)."""
-        return {
-            k: np.stack([r[k] for r in rs], axis=0)
-            for k in rs[0].keys()
-        }
+        return {k: np.stack([r[k] for r in rs], axis=0) for k in rs[0].keys()}
 
     # repackage data as ndarrays, wather than lists, collapse some dicts.
     multis = np.array(multis)
@@ -367,7 +357,7 @@ def rate_modulation(builder, edges, agonist_funcs=None, mul_range=10, plot=True)
     return models, multis, recs, probs, metrics
 
 
-def plot_modulation_metrics(multis, metrics, title=""):
+def plot_modulation_metrics(multis, metrics, title="", dist_over_prox=False):
     """Plot peak and delay for proximal and distal receptor probability
     responses (and the ratio bewteen them) at each rate modulation level. Title
     used to indicate which modulation condition the metrics are coming from,
@@ -380,12 +370,15 @@ def plot_modulation_metrics(multis, metrics, title=""):
     ax[0].set_ylim(0)
     ax[0].set_ylabel("Peak Probability", fontsize=12)
 
-    axr[0].plot(
-        multis, metrics["prox"]["peak"] / metrics["distal"]["peak"],
-        c="black", linestyle="--",
+    ratio = (
+        (metrics["distal"]["peak"] / metrics["prox"]["peak"])
+        if dist_over_prox
+        else (metrics["prox"]["peak"] / metrics["distal"]["peak"])
     )
-    axr[0].set_ylim(0)
-    axr[0].set_ylabel("Proximal / Distal", fontsize=12)
+    ratio_lbl = "Distal / Proximal" if dist_over_prox else "Proximal / Distal"
+    axr[0].plot(multis, ratio, c="black", linestyle="--")
+    axr[0].set_ylim(0, 1 if dist_over_prox else None)
+    axr[0].set_ylabel(ratio_lbl, fontsize=12)
 
     ax[1].plot(multis, metrics["prox"]["peak_time"], label="Proximal (0μm)")
     ax[1].plot(multis, metrics["distal"]["peak_time"], label="Distal (1.1μm)")
@@ -393,8 +386,10 @@ def plot_modulation_metrics(multis, metrics, title=""):
     ax[1].set_ylabel("Peak Time (ms)", fontsize=12)
 
     axr[1].plot(
-        multis, metrics["distal"]["peak_time"] - metrics["prox"]["peak_time"],
-        c="black", linestyle="--",
+        multis,
+        metrics["distal"]["peak_time"] - metrics["prox"]["peak_time"],
+        c="black",
+        linestyle="--",
     )
     axr[1].set_ylim(0)
     axr[1].set_ylabel("Delay (ms)", fontsize=12)
@@ -402,15 +397,15 @@ def plot_modulation_metrics(multis, metrics, title=""):
     ax[-1].set_xlabel("Rate Multiplier", fontsize=12)
 
     for a in ax:
-        for ticks in (a.get_xticklabels() + a.get_yticklabels()):
+        for ticks in a.get_xticklabels() + a.get_yticklabels():
             ticks.set_fontsize(11)
         a.set_xscale("log")
         a.legend(frameon=False, fontsize=11)
-        a.spines['right'].set_visible(False)
-        a.spines['top'].set_visible(False)
+        a.spines["right"].set_visible(False)
+        a.spines["top"].set_visible(False)
 
     fig.suptitle(title, fontsize=14)
-    fig.tight_layout(rect=[0, 0, 1, .95])  # rect to give space to suptitle
+    fig.tight_layout(rect=(0, 0, 1, 0.95))  # rect to give space to suptitle
 
     return fig
 
@@ -435,23 +430,23 @@ def plot_modulation_open_prob(multis, time, probs, ends=True, title=""):
         a.plot(time, distal, label="Distal (1.1μm)")
         a.set_title("x %.2f" % m, fontsize=12)
         a.set_xlabel("Time (ms)", fontsize=12)
-        for ticks in (a.get_xticklabels()):
+        for ticks in a.get_xticklabels():
             ticks.set_fontsize(11)
         a.spines["right"].set_visible(False)
         a.spines["top"].set_visible(False)
 
     ax[0].set_ylabel("Open Probability", fontsize=12)
-    for ticks in (ax[0].get_yticklabels()):
+    for ticks in ax[0].get_yticklabels():
         ticks.set_fontsize(11)
 
     for a in ax[1:]:
         a.spines["left"].set_visible(False)
-        a.yaxis.set_ticks_position('none')
+        a.yaxis.set_ticks_position("none")
 
     ax[len(ax) // 2].legend(frameon=False, fontsize=11)  # middle axis
 
     if not ends:
-        fig.tight_layout(rect=[0, 0, 1, .95])  # rect to give space to suptitle
+        fig.tight_layout(rect=[0, 0, 1, 0.95])  # rect to give space to suptitle
     fig.suptitle(title, fontsize=14)
 
     return fig
@@ -468,16 +463,15 @@ def plot_modulation_states(multis, time, recs, ends=True, title=""):
     if ends:
         idxs = [0] + idxs + [len(multis) - 1]
 
-    fig, ax = plt.subplots(
-        len(idxs), 2, sharex=True, sharey=True, figsize=(7, 10))
+    fig, ax = plt.subplots(len(idxs), 2, sharex=True, sharey=True, figsize=(7, 10))
     # unzip axes from rows in to column-major organization
     ax = [[a[i] for a in ax] for i in range(2)]
 
     loc_strs = ["Proximal (0μm)", "Distal (1.1μm)"]
-    for rec, col, loc in zip (recs.values(), ax, loc_strs):
+    for rec, col, loc in zip(recs.values(), ax, loc_strs):
         col[0].set_title(loc, fontsize=14, pad=18)
         col[-1].set_xlabel("Time (ms)", fontsize=12)
-        for ticks in (col[-1].get_xticklabels()):
+        for ticks in col[-1].get_xticklabels():
             ticks.set_fontsize(11)
         # plot appropriate index from each state recording ndarray on each axis
         for i, a in zip(idxs, col):
@@ -488,26 +482,34 @@ def plot_modulation_states(multis, time, recs, ends=True, title=""):
 
     for m, a in zip(multis[idxs], ax[0]):
         a.set_ylabel("x %.2f" % m, fontsize=12)
-        for ticks in (a.get_yticklabels()):
+        for ticks in a.get_yticklabels():
             ticks.set_fontsize(11)
 
     for a in ax[1]:
         a.spines["left"].set_visible(False)
-        a.yaxis.set_ticks_position('none')
+        a.yaxis.set_ticks_position("none")
 
     ax[1][0].legend(
-        frameon=False, loc="lower right", bbox_to_anchor=(1, .6),
-        ncol=2, fontsize=11
+        frameon=False, loc="lower right", bbox_to_anchor=(1, 0.6), ncol=2, fontsize=11
     )
 
-    fig.tight_layout(rect=[0, 0, 1, .95])  # rect to give space to suptitle
+    fig.tight_layout(rect=(0, 0, 1, 0.95))  # rect to give space to suptitle
     fig.suptitle(title, fontsize=14)
 
     return fig
 
 
-def binding_modulation_run(pth, builder, mul_range=10, threeD=False, trans="ach",
-                           show=False, fmt="png"):
+def binding_modulation_run(
+    pth,
+    builder,
+    mul_range=10,
+    threeD=False,
+    trans="ach",
+    make_figs=True,
+    dist_over_prox=False,
+    show=False,
+    fmts=["png"],
+):
     """Rate modulation experiments ran with sets of edges representing binding
     (kon) and unbinding (koff) rates. Results are plotted (saved in format given
     by `fmt`), and packed into an hdf5 archive."""
@@ -536,31 +538,41 @@ def binding_modulation_run(pth, builder, mul_range=10, threeD=False, trans="ach"
     data = {}
     for label, edges in rates.items():
         models, multis, recs, probs, metrics = rate_modulation(
-            builder, edges, agonists, mul_range)
+            builder, edges, agonists, mul_range, plot=False
+        )
 
         data[label] = {"recs": recs, "probs": probs, "metrics": metrics}
 
         # edge_str = ", ".join([" → ".join(e) for e in edges])
         # title = "%s; %s; (Space %s)" % (models["prox"].name, edge_str, d_flag)
-        title = "%s %s modulation" % (models["prox"].name, label)
-        metric_fig = plot_modulation_metrics(multis, metrics, title=title)
-        open_fig = plot_modulation_open_prob(
-            multis, models["prox"].time, probs, title=title)
-        states_fig = plot_modulation_states(
-            multis, models["prox"].time, recs, title=title)
-        fname = models["prox"].name + "_mod_" + label + "_" + d_flag
-        metric_fig.savefig(pth + fname + "_metrics." + fmt, bbox_inches="tight")
-        open_fig.savefig(pth + fname + "_open_prob." + fmt, bbox_inches="tight")
-        states_fig.savefig(pth + fname + "_states." + fmt, bbox_inches="tight")
+        if make_figs:
+            title = "%s %s modulation" % (models["prox"].name, label)
+            metric_fig = plot_modulation_metrics(
+                multis, metrics, title=title, dist_over_prox=dist_over_prox
+            )
+            open_fig = plot_modulation_open_prob(
+                multis, models["prox"].time, probs, title=title
+            )
+            states_fig = plot_modulation_states(
+                multis, models["prox"].time, recs, title=title
+            )
+            fname = os.path.join(
+                pth, models["prox"].name + "_mod_" + label + "_" + d_flag
+            )
+            for fmt in fmts:
+                metric_fig.savefig("%s_metrics.%s" % (fname, fmt), bbox_inches="tight")
+                open_fig.savefig("%s_open_prob.%s" % (fname, fmt), bbox_inches="tight")
+                states_fig.savefig("%s_states.%s" % (fname, fmt), bbox_inches="tight")
 
-        if show:
-            plt.show()
+            if show:
+                plt.show()
 
     data["time"] = np.array(models["prox"].time)
     data["multis"] = np.array(multis)
 
     model_name = ("%s" % models["prox"].name).replace(" ", "_")
-    utils.pack_hdf(pth + model_name + "_rate_mod", data)
+    utils.pack_hdf(os.path.join(pth, model_name + "_rate_mod"), data)
+    return data
 
 
 def kd_vs_peak_ratio():
@@ -571,8 +583,8 @@ def kd_vs_peak_ratio():
     """
     receptors = ["GABA", "alpha7", "alpha6ish", "alpha3", "NMDA"]
     kds = np.array([15, 2, 2, 36.5, 3.05])
-    glut_rs = np.array([.268, .462, .608, .1, .774])
-    ach_rs = np.array([.506, .735, .857, .199, .981])
+    glut_rs = np.array([0.268, 0.462, 0.608, 0.1, 0.774])
+    ach_rs = np.array([0.506, 0.735, 0.857, 0.199, 0.981])
 
     fig, ax = plt.subplots(1, 2, sharex=True, figsize=(10, 4))
     ax[0].scatter(kds, glut_rs)
@@ -587,7 +599,7 @@ def kd_vs_peak_ratio():
         a.set_xlabel("KD (μM)")
         a.spines["right"].set_visible(False)
         a.spines["top"].set_visible(False)
-        for ticks in (a.get_yticklabels()):
+        for ticks in a.get_yticklabels():
             ticks.set_fontsize(11)
 
     ax[0].set_title("Glutamate Release", fontsize=14)
@@ -597,12 +609,18 @@ def kd_vs_peak_ratio():
     plt.show()
 
 
-def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], duration=25000,
-                   save_pth=None, fmt="png"):
+def plot_diffusion(
+    trans="ach",
+    radii=[0.0, 1.1],
+    spaces=[2, 3],
+    duration=25000,
+    save_pth=None,
+    fmt="png",
+):
     """Visualize concentration profiles at the given radii (generally a proximal
     and a distal site) that result from diffusion of ach or glut release events.
     2D diffusion, 3D diffusion, or both can be included (set by spaces list)."""
-    time_ax = np.arange(1, duration + 1) * .001  # [ms]
+    time_ax = np.arange(1, duration + 1) * 0.001  # [ms]
     time = time_ax / 1000  # [s]
 
     funcs = {}
@@ -631,10 +649,10 @@ def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], duration=25000,
     ax.set_xlabel("Time (ms)", fontsize=12)
     ax.legend(frameon=False, fontsize=11)
 
-    for ticks in (ax.get_xticklabels() + ax.get_yticklabels()):
+    for ticks in ax.get_xticklabels() + ax.get_yticklabels():
         ticks.set_fontsize(11)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
 
     plt.tight_layout()
 
@@ -645,13 +663,20 @@ def plot_diffusion(trans="ach", radii=[0., 1.1], spaces=[2, 3], duration=25000,
     plt.show()
 
 
-def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="ach",
-                      title=None, save_pth=None, fmt="png"):
+def volume_comparison(
+    graph_builder,
+    alphas=[0.21, 0.1],
+    radii=[0.0, 1.1],
+    trans="ach",
+    title=None,
+    save_pth=None,
+    fmt="png",
+):
     """Simple comparison of diffusion profiles and receptor open probability
     response at varying 3D volume fraction `alphas` and radii. Alpha levels cycle
     through linestyles, and radii through colours. Only including 4 levels to
     cycle for each since the figure quickly becomes cluttered."""
-    linestyles = ["-", "--", "-.", ":"]      # up to 4 alpha levels
+    linestyles = ["-", "--", "-.", ":"]  # up to 4 alpha levels
     colours = ["C%i" % i for i in range(4)]  # up to 4 radius levels
 
     if trans == "ach":
@@ -662,9 +687,7 @@ def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="a
         coef = 7.6e-10
 
     funcs = {
-        "%.2f" % a: {
-            "%.1f" % r: space3D(mols, coef, r * 1e-6, alpha=a) for r in radii
-        }
+        "%.2f" % a: {"%.1f" % r: space3D(mols, coef, r * 1e-6, alpha=a) for r in radii}
         for a in alphas
     }
 
@@ -693,11 +716,11 @@ def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="a
     fig.suptitle(title)
 
     for a in ax:
-        for ticks in (a.get_xticklabels() + a.get_yticklabels()):
+        for ticks in a.get_xticklabels() + a.get_yticklabels():
             ticks.set_fontsize(11)
         a.legend(frameon=False, fontsize=11)
-        a.spines['right'].set_visible(False)
-        a.spines['top'].set_visible(False)
+        a.spines["right"].set_visible(False)
+        a.spines["top"].set_visible(False)
 
     fig.tight_layout()
 
@@ -708,8 +731,16 @@ def volume_comparison(graph_builder, alphas=[.21, .1], radii=[0., 1.1], trans="a
     plt.show()
 
 
-def volume_curve(graph_builder, vol_step=.01, vol_max=.5, radii=[0., 1.1],
-                 trans="ach", title=None, save_pth=None, fmt="png"):
+def volume_curve(
+    graph_builder,
+    vol_step=0.01,
+    vol_max=0.5,
+    radii=[0.0, 1.1],
+    trans="ach",
+    title=None,
+    save_pth=None,
+    fmt="png",
+):
     """Run through a range of volume fraction (alpha) values and plot the
     resulting peak probabilities and peak delays for a given receptor model with
     the set of radii provided."""
@@ -735,14 +766,14 @@ def volume_curve(graph_builder, vol_step=.01, vol_max=.5, radii=[0., 1.1],
 
     probs = {
         r_k: np.stack(
-            [total_open(graph_builder(agonist_func=f).run()) for f in fs], axis=0)
+            [total_open(graph_builder(agonist_func=f).run()) for f in fs], axis=0
+        )
         for r_k, fs in funcs.items()
     }
 
     peaks = {r_k: np.max(p, axis=1) for r_k, p in probs.items()}
     delays = {
-        r_k: np.where(
-            prbs == np.broadcast_to(pks.reshape(-1, 1), prbs.shape))[1] * dt
+        r_k: np.where(prbs == np.broadcast_to(pks.reshape(-1, 1), prbs.shape))[1] * dt
         for (r_k, prbs), pks in zip(probs.items(), peaks.values())
     }
 
@@ -763,11 +794,11 @@ def volume_curve(graph_builder, vol_step=.01, vol_max=.5, radii=[0., 1.1],
     fig.suptitle(title)
 
     for a in ax:
-        for ticks in (a.get_xticklabels() + a.get_yticklabels()):
+        for ticks in a.get_xticklabels() + a.get_yticklabels():
             ticks.set_fontsize(11)
         a.legend(frameon=False, fontsize=11)
-        a.spines['right'].set_visible(False)
-        a.spines['top'].set_visible(False)
+        a.spines["right"].set_visible(False)
+        a.spines["top"].set_visible(False)
 
     fig.tight_layout()
 
@@ -778,8 +809,16 @@ def volume_curve(graph_builder, vol_step=.01, vol_max=.5, radii=[0., 1.1],
     plt.show()
 
 
-def radius_curve(graph_builder, trans="ach", radius_max=1.1, radius_step=.01,
-                 threeD=False, title=None, save_pth=None, fmt="png"):
+def radius_curve(
+    graph_builder,
+    trans="ach",
+    radius_max=1.1,
+    radius_step=0.01,
+    threeD=False,
+    title=None,
+    save_pth=None,
+    fmt="png",
+):
     """Run through a range of radii values, for proximal and distal sites and
     plot the resulting peak probabilities and peak delays for a given receptor
     model, and the differences. Comparisons are made between holding the proximal
@@ -804,14 +843,15 @@ def radius_curve(graph_builder, trans="ach", radius_max=1.1, radius_step=.01,
     name = model_ex.name
     dt = model_ex.dt
 
-    probs = np.stack([
-        total_open(graph_builder(agonist_func=func(r * 1e-6)).run())
-        for r in radii
-    ], axis=0)
+    probs = np.stack(
+        [total_open(graph_builder(agonist_func=func(r * 1e-6)).run()) for r in radii],
+        axis=0,
+    )
 
     peaks = np.max(probs, axis=1)
-    delays = np.where(
-        probs == np.broadcast_to(peaks.reshape(-1, 1), probs.shape))[1] * dt
+    delays = (
+        np.where(probs == np.broadcast_to(peaks.reshape(-1, 1), probs.shape))[1] * dt
+    )
 
     rads_fig, rads_ax = plt.subplots(2, sharex=True)
 
@@ -842,10 +882,10 @@ def radius_curve(graph_builder, trans="ach", radius_max=1.1, radius_step=.01,
 
     for ax in [rads_ax, comp_ax]:
         for a in ax:
-            for ticks in (a.get_xticklabels() + a.get_yticklabels()):
+            for ticks in a.get_xticklabels() + a.get_yticklabels():
                 ticks.set_fontsize(11)
-            a.spines['right'].set_visible(False)
-            a.spines['top'].set_visible(False)
+            a.spines["right"].set_visible(False)
+            a.spines["top"].set_visible(False)
 
     for a in comp_ax:
         a.legend(frameon=False, fontsize=11)
@@ -869,7 +909,7 @@ if __name__ == "__main__":
     if not os.path.isdir(fig_pth):
         os.mkdir(fig_pth)
 
-    fig_fmt="png"
+    fig_fmt = "png"
 
     # diffusion2D_alpha_comparison(save_pth=fig_pth, fmt=fig_fmt)
     # alpha7_vs_alpha6(save_pth=fig_pth, fmt=fig_fmt)
